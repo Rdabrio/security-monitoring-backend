@@ -1,36 +1,61 @@
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from keras.models import Sequential
-from keras.layers import LSTM, Dense
-from sklearn.preprocessing import MinMaxScaler
+from keras.layers import LSTM, GRU, Dense, Dropout
+from keras.optimizers import Adam
+import json
 
-# Supongamos que los datos están en un DataFrame de Pandas
-data = pd.DataFrame({
-    'año': [2013, 2014, 2015, 2016, 2017],
-    'numero': [13305, 13100, 12027, 12021, 12244]
-})
+# Cargar el archivo JSON completo
+json_file_path = 'c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa_data.json'
+with open(json_file_path, 'r', encoding='utf-8') as f:
+    data = json.load(f)
 
-# Preprocesamiento de los datos
-scaler = MinMaxScaler(feature_range=(0, 1))
-scaled_data = scaler.fit_transform(data['numero'].values.reshape(-1, 1))
+def preparar_datos_completo(data):
+    comunidades = [item["comunidad"]["nombre"] for item in data["datos_comunidades"]]
+    años = [item["año"] for item in data["datos_comunidades"]]
+    numeros = [item["numero"] for item in data["datos_comunidades"]]
+    
+    # One-Hot Encoding para las comunidades autónomas
+    encoder = OneHotEncoder(sparse_output=False)
+    comunidades_encoded = encoder.fit_transform(np.array(comunidades).reshape(-1, 1))
+    
+    # Escalado del número de crímenes usando MinMaxScaler
+    scaler = MinMaxScaler(feature_range=(0, 100))
+    numeros_scaled = scaler.fit_transform(np.array(numeros).reshape(-1, 1))
+    
+    # Guardar los valores de normalización
+    min_value = scaler.data_min_
+    max_value = scaler.data_max_
+    np.save('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/min_value_NC.npy', min_value)
+    np.save('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/max_value_NC.npy', max_value)
+    
+    # Ajustar las dimensiones para la concatenación
+    X = np.concatenate([comunidades_encoded[:-1], numeros_scaled[:-1]], axis=1)
+    y = numeros_scaled[1:]
+    
+    # Redimensionar para LSTM/GRU
+    X = X.reshape((X.shape[0], 1, X.shape[1]))  # 1 timestep por entrada
+    
+    return X, y, encoder
 
-# Preparar los datos para LSTM
-X, y = [], []
-for i in range(1, len(scaled_data)):
-    X.append(scaled_data[i-1:i])
-    y.append(scaled_data[i])
-X, y = np.array(X), np.array(y)
+def entrenar_modelo_lstm_gru(X, y):
+    model = Sequential()
+    model.add(LSTM(units=128, return_sequences=True, input_shape=(X.shape[1], X.shape[2])))
+    model.add(Dropout(0.3))
+    model.add(LSTM(units=128, return_sequences=True))  # Añadir más capas
+    model.add(Dropout(0.3))
+    model.add(LSTM(units=64))
+    model.add(Dropout(0.3))
+    model.add(Dense(1))
+    
+    optimizer = Adam(learning_rate=0.001)
+    
+    model.compile(optimizer=optimizer, loss='mean_squared_error')
+    model.fit(X, y, epochs=300, batch_size=32, verbose=2)
+    
+    # Guardar el modelo entrenado
+    model.save('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/saved_models/ccaa/numbercrimes.h5')
 
-# Construir el modelo LSTM
-model = Sequential()
-model.add(LSTM(units=50, return_sequences=True, input_shape=(X.shape[1], 1)))
-model.add(LSTM(units=50))
-model.add(Dense(1))
-
-model.compile(optimizer='adam', loss='mean_squared_error')
-model.fit(X, y, epochs=100, batch_size=1, verbose=2)
-
-# Hacer predicciones
-predicted_value = model.predict(X[-1].reshape(1, 1, 1))
-predicted_value = scaler.inverse_transform(predicted_value)
-print(predicted_value)
+X, y, encoder = preparar_datos_completo(data)
+entrenar_modelo_lstm_gru(X, y)

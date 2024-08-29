@@ -42,4 +42,7 @@ def predecir(comunidad, año):
 
     # Desnormalizar
     predicciones_futuras = np.array(predicciones_futuras).reshape(-1, 1)
-    return MinMaxScaler().inverse_transform(predicciones_futuras).flatten().tolist()
+    predicciones_desnormalizadas = predicciones_futuras * (max_value - min_value) + min_value
+    return predicciones_desnormalizadas.flatten().tolist()
+
+#print(predecir("Castilla y León", 2019))
