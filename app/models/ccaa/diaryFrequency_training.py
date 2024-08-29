@@ -8,7 +8,7 @@ import json
 # Paso 1: Cargar y Preparar los Datos desde un JSON Local
 
 # Ruta del archivo JSON local
-json_file_path = 'app/data/ccaa_data.json'
+json_file_path = '../../../app/data/ccaa_data.json'
 
 # Cargar los datos desde el archivo JSON
 with open(json_file_path, 'r', encoding='utf-8') as f:
@@ -77,12 +77,11 @@ model.fit(X, y, epochs=20, batch_size=32, verbose=2)
 # Paso 5: Guardar el Modelo y los Valores de Normalización
 
 # Guardar el modelo entrenado en un archivo .h5
-model.save('app/saved_models/ccaa/modelo_entrenado.h5')
+model.save('../../../app/saved_models/ccaa/modelo_entrenado.h5')
 
 # Guardar los valores de normalización (min y max) para usarlos en las predicciones
 min_value = df_diario['numero'].min()
 max_value = df_diario['numero'].max()
-np.save('app/data/ccaa/min_value_DF.npy', min_value)
-np.save('app/data/ccaa/max_value_DF.npy', max_value)
+np.save('../../../app/data/ccaa/min_value_DF.npy', min_value)
+np.save('../../../app/data/ccaa/max_value_DF.npy', max_value)
 
-print("Modelo y valores de normalización guardados exitosamente.")

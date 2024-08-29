@@ -45,4 +45,4 @@ def predecir(comunidad, año):
     predicciones_desnormalizadas = predicciones_futuras * (max_value - min_value) + min_value
     return predicciones_desnormalizadas.flatten().tolist()
 
-print(predecir("Galicia", 2022))
+print(predecir("Cataluña", 2019))
