@@ -5,20 +5,21 @@ from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 import json
 
 # Cargar el modelo entrenado
-model = load_model('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/saved_models/ccaa/numbercrimes.h5')
+model = load_model('../../../app/saved_models/ccaa/numbercrimes.h5')
 
 # Cargar los valores de normalización y el encoder
-min_value = np.load('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/min_value_NC.npy')
-max_value = np.load('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/max_value_NC.npy')
+min_value = np.load('../../../app/data/ccaa/min_value_NC.npy')
+max_value = np.load('../../../app/data/ccaa/max_value_NC.npy')
+encoder_categories = np.load('../../../app/data/ccaa/encoder_NC.npy', allow_pickle=True)
+encoder_categories = encoder_categories.tolist()
 
 # Cargar el archivo JSON completo y el OneHotEncoder
-json_file_path = 'c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa_data.json'
+json_file_path = '../../../app/data/ccaa_data.json'
 with open(json_file_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
-comunidades = [item["comunidad"]["nombre"] for item in data["datos_comunidades"]]
-encoder = OneHotEncoder(sparse_output=False)
-encoder.fit(np.array(comunidades).reshape(-1, 1))
+encoder = OneHotEncoder(sparse_output=False, categories=encoder_categories)
+encoder.fit(np.array(encoder_categories).reshape(-1, 1))
 
 def predecir_numero_crimenes_anual(comunidad, año):
     # Filtrar los datos para la comunidad y el año específicos
@@ -53,7 +54,7 @@ def predecir_numero_crimenes_anual(comunidad, año):
     return predicted_value_descaled.flatten().tolist()
 
 # Ejemplo de uso para predicción de un año específico
-comunidad = "Cataluña"
+comunidad = "Andalucía"
 año = 2022
 prediccion = predecir_numero_crimenes_anual(comunidad, año)
 print(f"Predicción de crímenes en {año} para {comunidad}: {prediccion}")

@@ -1,20 +1,25 @@
 import numpy as np
 import pandas as pd
 from keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 import json
 
 # Cargar el modelo entrenado
-model = load_model('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/saved_models/ccaa/longterm.h5')
+model = load_model('../../../app/saved_models/ccaa/longterm.h5')
 
 # Cargar los valores de normalización
-min_value = np.load('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/min_value_LT.npy')
-max_value = np.load('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/max_value_LT.npy')
+min_value = np.load('../../../app/data/ccaa/min_value_LT.npy')
+max_value = np.load('../../../app/data/ccaa/max_value_LT.npy')
+encoder_categories = np.load('../../../app/data/ccaa/encoder_LT.npy', allow_pickle=True)
+encoder_categories = encoder_categories.tolist()
 
 # Cargar el archivo JSON completo
-json_file_path = 'c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa_data.json'
+json_file_path = '../../../app/data/ccaa_data.json'
 with open(json_file_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
+
+encoder = OneHotEncoder(sparse_output=False, categories=encoder_categories)
+encoder.fit(np.array(encoder_categories).reshape(-1, 1))
 
 def predecir_tendencia(comunidad, año):
     # Filtrar los datos para la comunidad y el año específicos
@@ -29,12 +34,16 @@ def predecir_tendencia(comunidad, año):
     # Preprocesar los datos para predicción
     df = pd.DataFrame(datos_filtrados)
     df['numero_diario'] = df['numero'] / 365
+
+    comunidad_encoded = encoder.transform([[comunidad]])
+
     scaler = MinMaxScaler(feature_range=(0, 1))
     datos_escalados = scaler.fit_transform(df['numero_diario'].values.reshape(-1, 1))
 
     # Preparar los datos para la predicción (última ventana)
     window_size = 7
-    X = datos_escalados[-window_size:].reshape(1, window_size, 1)
+    X_combined = np.concatenate([comunidad_encoded.repeat(window_size, axis=0), datos_escalados[-window_size:]], axis=1)
+    X = X_combined.reshape(1, window_size, X_combined.shape[1])
     
     # Hacer predicciones
     predicted_values = model.predict(X)

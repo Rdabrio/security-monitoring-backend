@@ -5,14 +5,14 @@ from sklearn.preprocessing import MinMaxScaler
 import json
 
 # Cargar el modelo entrenado
-model = load_model('app/saved_models/ccaa/diaryfrequency.h5')
+model = load_model('../../../app/saved_models/ccaa/diaryfrequency.h5')
 
 # Cargar los valores de normalización
-min_value = np.load('app/data/ccaa/min_value_DF.npy')
-max_value = np.load('app/data/ccaa/max_value_DF.npy')
+min_value = np.load('../../../app/data/ccaa/min_value_DF.npy')
+max_value = np.load('../../../app/data/ccaa/max_value_DF.npy')
 
 # Cargar el archivo JSON completo
-json_file_path = 'app/data/ccaa_data.json'
+json_file_path = '../../../app/data/ccaa_data.json'
 with open(json_file_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
@@ -45,4 +45,4 @@ def predecir(comunidad, año):
     predicciones_desnormalizadas = predicciones_futuras * (max_value - min_value) + min_value
     return predicciones_desnormalizadas.flatten().tolist()
 
-#print(predecir("Castilla y León", 2019))
+print(predecir("Galicia", 2022))

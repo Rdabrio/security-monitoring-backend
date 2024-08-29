@@ -7,7 +7,7 @@ from keras.optimizers import Adam
 import json
 
 # Cargar el archivo JSON completo
-json_file_path = 'c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa_data.json'
+json_file_path = '../../../app/data/ccaa_data.json'
 with open(json_file_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
@@ -27,8 +27,9 @@ def preparar_datos_completo(data):
     # Guardar los valores de normalización
     min_value = scaler.data_min_
     max_value = scaler.data_max_
-    np.save('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/min_value_NC.npy', min_value)
-    np.save('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/data/ccaa/max_value_NC.npy', max_value)
+    np.save('../../../app/data/ccaa/min_value_NC.npy', min_value)
+    np.save('../../../app/data/ccaa/max_value_NC.npy', max_value)
+    np.save('../../../app/data/ccaa/encoder_NC.npy', encoder.categories_)
     
     # Ajustar las dimensiones para la concatenación
     X = np.concatenate([comunidades_encoded[:-1], numeros_scaled[:-1]], axis=1)
@@ -55,7 +56,7 @@ def entrenar_modelo_lstm_gru(X, y):
     model.fit(X, y, epochs=300, batch_size=32, verbose=2)
     
     # Guardar el modelo entrenado
-    model.save('c:/Users/Dabrio/Desktop/Proyectos/security-monitoring-backend-def/security-monitoring-backend/app/saved_models/ccaa/numbercrimes.h5')
+    model.save('../../../app/saved_models/ccaa/numbercrimes.h5')
 
 X, y, encoder = preparar_datos_completo(data)
 entrenar_modelo_lstm_gru(X, y)
