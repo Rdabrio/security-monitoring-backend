@@ -8,16 +8,16 @@ import os
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Cargar el modelo entrenado
-model = load_model(os.path.join(base_dir,'../../../app/saved_models/ccaa/numbercrimes.h5'))
+model = load_model(os.path.join(base_dir,'../../../app/saved_models/abp/numbercrimes.h5'))
 
 # Cargar los valores de normalización y el encoder
-min_value = np.load(os.path.join(base_dir,'../../../app/data/ccaa/min_value_NC.npy'))
-max_value = np.load(os.path.join(base_dir,'../../../app/data/ccaa/max_value_NC.npy'))
-encoder_categories = np.load(os.path.join(base_dir,'../../../app/data/ccaa/encoder_NC.npy'), allow_pickle=True)
+min_value = np.load(os.path.join(base_dir,'../../../app/data/abp/min_value_NC.npy'))
+max_value = np.load(os.path.join(base_dir,'../../../app/data/abp/max_value_NC.npy'))
+encoder_categories = np.load(os.path.join(base_dir,'../../../app/data/abp/encoder_NC.npy'), allow_pickle=True)
 encoder_categories = encoder_categories.tolist()
 
 # Cargar el archivo JSON completo y el OneHotEncoder
-json_file_path = os.path.join(base_dir,'../../../app/data/ccaa_data.json')
+json_file_path = os.path.join(base_dir,'../../../app/data/catalonia_data.json')
 with open(json_file_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
@@ -25,10 +25,11 @@ encoder = OneHotEncoder(sparse_output=False, categories=encoder_categories)
 encoder.fit(np.array(encoder_categories).reshape(-1, 1))
 
 def predecir_numero_crimenes_anual(comunidad, año):
+    print(comunidad, año)
     # Filtrar los datos para la comunidad y el año específicos
     datos_filtrados = [
-        item for item in data["datos_comunidades"]
-        if item["comunidad"]["nombre"] == comunidad and item["año"] == año
+        item for item in data["datos_ABP"]
+        if item["ABP"] == comunidad and item["año"] == año
     ]
     
     if not datos_filtrados:
@@ -55,4 +56,3 @@ def predecir_numero_crimenes_anual(comunidad, año):
     predicted_value_descaled = predicted_value * (max_value - min_value) + min_value
     
     return predicted_value_descaled.flatten().tolist()
-

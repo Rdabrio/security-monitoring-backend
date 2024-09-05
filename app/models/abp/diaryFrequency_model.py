@@ -8,22 +8,22 @@ import os
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Cargar el modelo entrenado
-model = load_model(os.path.join(base_dir,'../../../app/saved_models/ccaa/diaryfrequency.h5'))
+model = load_model(os.path.join(base_dir,'../../../app/saved_models/abp/diaryfrequency.h5'))
 
 # Cargar los valores de normalización
-min_value = np.load(os.path.join(base_dir,'../../../app/data/ccaa/min_value_DF.npy'))
-max_value = np.load(os.path.join(base_dir,'../../../app/data/ccaa/max_value_DF.npy'))
+min_value = np.load(os.path.join(base_dir,'../../../app/data/abp/min_value_DF.npy'))
+max_value = np.load(os.path.join(base_dir,'../../../app/data/abp/max_value_DF.npy'))
 
 # Cargar el archivo JSON completo
-json_file_path = os.path.join(base_dir,'../../../app/data/ccaa_data.json')
+json_file_path = os.path.join(base_dir,'../../../app/data/catalonia_data.json')
 with open(json_file_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 def predecir(comunidad, año):
     # Filtrar los datos
     datos_filtrados = [
-        item for item in data["datos_comunidades"]
-        if item["comunidad"]["nombre"] == comunidad and item["año"] == año
+        item for item in data["datos_ABP"]
+        if item["ABP"] == comunidad and item["año"] == año
     ]
     
     if not datos_filtrados:
@@ -47,4 +47,5 @@ def predecir(comunidad, año):
     predicciones_futuras = np.array(predicciones_futuras).reshape(-1, 1)
     predicciones_desnormalizadas = predicciones_futuras * (max_value - min_value) + min_value
     return predicciones_desnormalizadas.flatten().tolist()
+
 

@@ -8,16 +8,16 @@ import os
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Cargar el modelo entrenado
-model = load_model(os.path.join(base_dir,'../../../app/saved_models/ccaa/longterm.h5'))
+model = load_model(os.path.join(base_dir,'../../../app/saved_models/abp/longterm.h5'))
 
 # Cargar los valores de normalización
-min_value = np.load(os.path.join(base_dir,'../../../app/data/ccaa/min_value_LT.npy'))
-max_value = np.load(os.path.join(base_dir,'../../../app/data/ccaa/max_value_LT.npy'))
-encoder_categories = np.load(os.path.join(base_dir,'../../../app/data/ccaa/encoder_LT.npy'), allow_pickle=True)
+min_value = np.load(os.path.join(base_dir,'../../../app/data/abp/min_value_LT.npy'))
+max_value = np.load(os.path.join(base_dir,'../../../app/data/abp/max_value_LT.npy'))
+encoder_categories = np.load(os.path.join(base_dir,'../../../app/data/abp/encoder_LT.npy'), allow_pickle=True)
 encoder_categories = encoder_categories.tolist()
 
 # Cargar el archivo JSON completo
-json_file_path = os.path.join(base_dir,'../../../app/data/ccaa_data.json')
+json_file_path = os.path.join(base_dir,'../../../app/data/catalonia_data.json')
 with open(json_file_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
@@ -27,8 +27,8 @@ encoder.fit(np.array(encoder_categories).reshape(-1, 1))
 def predecir_tendencia(comunidad, año):
     # Filtrar los datos para la comunidad y el año específicos
     datos_filtrados = [
-        item for item in data["datos_comunidades"]
-        if item["comunidad"]["nombre"] == comunidad and item["año"] == año
+        item for item in data["datos_ABP"]
+        if item["ABP"] == comunidad and item["año"] == año
     ]
     
     if not datos_filtrados:
@@ -41,7 +41,9 @@ def predecir_tendencia(comunidad, año):
     comunidad_encoded = encoder.transform([[comunidad]])
 
     scaler = MinMaxScaler(feature_range=(0, 1))
-    datos_escalados = scaler.fit_transform(df['numero_diario'].values.reshape(-1, 1))
+    scaler.min_, scaler.scale_ = min_value, 1 / (max_value - min_value)
+    datos_escalados = scaler.transform(df['numero_diario'].values.reshape(-1, 1))
+
 
     # Preparar los datos para la predicción (última ventana)
     window_size = 7
@@ -52,6 +54,6 @@ def predecir_tendencia(comunidad, año):
     predicted_values = model.predict(X)
     
     # Desnormalizar los valores predichos
-    predicted_values_descaled = predicted_values * (max_value - min_value) + min_value
+    predicted_values_descaled = scaler.inverse_transform(predicted_values)
     
     return predicted_values_descaled.flatten().tolist()
