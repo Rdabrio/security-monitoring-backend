@@ -1,8 +1,17 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.ccaa import Predict_DF, Predict_LT, Predict_NC
 from app.api.abp import Predict_DF as Predict_DF_ABP, Predict_LT as Predict_LT_ABP, Predict_NC as Predict_NC_ABP
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite todos los orígenes
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos los métodos
+    allow_headers=["*"],  # Permite todas las cabeceras
+)
 
 app.include_router(Predict_DF.router, prefix="/api/ccaa/DF", tags=["Model 1"])
 app.include_router(Predict_LT.router, prefix="/api/ccaa/LT", tags=["Model 2"])
